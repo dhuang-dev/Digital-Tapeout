@@ -26,8 +26,6 @@ always_ff @(posedge clk or negedge rst_n) begin
 end
 
 always_comb begin
-    next_state = current_state;
-    detect = 1'b0;
     case(current_state) 
         S_IDLE: begin
             if (din) next_state = S_1;
@@ -52,7 +50,7 @@ always_comb begin
             end else begin
                 next_state = S_10;
             end
-        default: next_state = S_IDLE;
+        default: next_state = S_IDLE, detect = 1'b0;
     endcase
 end
 endmodule
@@ -88,8 +86,6 @@ always_ff @(posedge clk or negedge rst_n) begin
 end
 
 always_comb begin
-    next_state = current_state;
-    detect = 1'b0;
     case(current_state)
         S_IDLE: begin
             if (din) next_state = S_1;
@@ -115,7 +111,7 @@ always_comb begin
             detect = 1'b1;
             next_state = S_10;
         end
-        default: next_state = S_IDLE;
+        default: next_state = S_IDLE, detect = 1'b0;
     endcase
 endmodule
 

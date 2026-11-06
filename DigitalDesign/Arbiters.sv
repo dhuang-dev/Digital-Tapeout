@@ -65,3 +65,12 @@ always_ff @(posedge clk or negedge rst_n) begin
 end
 
 endmodule
+
+//1.4c: concept of starvation: in a fixed_priority arbiter, the lowest priority requester
+//may never get granted if higher priority requesters are always requesting a certain resource and getting granted.
+//That's the concept of starvation. A round-robin arbiter fixed this because it rotates a priority mask
+//so that the lowest priority requester will eventually get granted if it is requesting
+
+//1.4d: round robin arbiter method 2
+//rotating request vectors before and after fixed priority arbiter requires more shifters
+//increases combinational logic path, delay (frequency slower), and also more area on the chip

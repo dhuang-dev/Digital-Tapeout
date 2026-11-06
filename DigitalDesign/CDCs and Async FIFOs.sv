@@ -1,4 +1,4 @@
-//ASYNC FIFO CODE (No Comments, look below)
+//ASYNC FIFO no comments, check below
 module async_fifo #(
     parameter FIFO_DEPTH = 32,
     parameter DATA_W = 16
@@ -22,17 +22,12 @@ logic [ADDR_W:0] w_ptr_bin, w_ptr_bin_next, w_ptr_gray, w_ptr_gray_next;
 logic [ADDR_W:0] r_ptr_bin, r_ptr_bin_next, r_ptr_gray, r_ptr_gray_next;
 logic [ADDR_W:0] r2w_ptr_gray, r2w_ptr_gray_sync1;
 logic [ADDR_W:0] w2r_ptr_gray, w2r_ptr_gray_sync1;
-
-function automatic [ADDR_W:0] bin2gray(input [ADDR_W:0] bin);
-    return bin ^ (bin >> 1);
-endfunction
+logic full, empty;
 
 assign w_ptr_bin_next = wptr_bin + (in_valid && in_ready ? 1'b1 : 1'b0);
-assign w_ptr_gray_next = bin2gray(w_ptr_bin_next);
+assign w_ptr_gray_next = w_ptr_bin_next ^ (w_ptr_bin_next >> 1);
 
-assign in_ready = ~((w_ptr_gray_next[ADDR_W] != r2w_ptr_gray[ADDR_W])
-                  && (w_ptr_gray_next[ADDR_W-1] != r2w_ptr_gray[ADDR_W-1])
-                  && (w_ptr_gray_next[ADDR_W-2:0] == r2w_ptr_gray[ADDR_W-2:0]));
+assign in_ready = {~r2w_ptr_gray[ADDR_W:ADDR_W-1], r2w_ptr_gray[ADDR_W-2:0]};
 
 always_ff @(posedge wclk or negedge rst_n) begin
     if (!rst_n) begin
@@ -57,8 +52,9 @@ end
 
 assign r_data = mem[r_ptr_bin[ADDR_W-1:0]];
 assign out_valid = (r_ptr_gray != w2r_ptr_gray);
+
 assign r_ptr_bin_next = r_ptr_bin + (out_valid && out_ready ? 1'b1 : 1'b0);
-assign r_ptr_gray_next = bin2gray(r_ptr_bin_next);
+assign r_ptr_gray_next = r_ptr_bin_next ^ (r_ptr_bin_next >> 1);
 
 always_ff @(posedge rclk or negedge rst_n) begin
     if (!rst_n) begin
@@ -137,20 +133,14 @@ logic [ADDR_W:0] w_ptr_bin, w_ptr_bin_next, w_ptr_gray, w_ptr_gray_next;
 logic [ADDR_W:0] r_ptr_bin, r_ptr_bin_next, r_ptr_gray, r_ptr_gray_next;
 logic [ADDR_W:0] r2w_ptr_gray, r2w_ptr_gray_sync1;
 logic [ADDR_W:0] w2r_ptr_gray, w2r_ptr_gray_sync1;
-
-//conversion of binary to gray code function
-function automatic [ADDR_W:0] bin2gray(input [ADDR_W:0] bin);
-    return bin ^ (bin >> 1);
-endfunction
+logic full, empty;
 
 //actually converting
 assign w_ptr_bin_next = wptr_bin + (in_valid && in_ready ? 1'b1 : 1'b0);
-assign w_ptr_gray_next = bin2gray(w_ptr_bin_next);
+assign w_ptr_gray_next = w_ptr_bin_next ^ (w_ptr_bin_next >> 1);
 
 //3 things: check if full, ~full inready = 1; check lap bit, check mirror gray code bit, check rest
-assign in_ready = ~((w_ptr_gray_next[ADDR_W] != r2w_ptr_gray[ADDR_W])
-                  && (w_ptr_gray_next[ADDR_W-1] != r2w_ptr_gray[ADDR_W-1])
-                  && (w_ptr_gray_next[ADDR_W-2:0] == r2w_ptr_gray[ADDR_W-2:0]));
+assign in_ready = {~r2w_ptr_gray[ADDR_W:ADDR_W-1], r2w_ptr_gray[ADDR_W-2:0]};
 
 //writing data and assigning next pointer 
 always_ff @(posedge wclk or negedge rst_n) begin
@@ -182,7 +172,7 @@ assign r_data = mem[r_ptr_bin[ADDR_W-1:0]];
 assign out_valid = (r_ptr_gray != w2r_ptr_gray);
 
 assign r_ptr_bin_next = r_ptr_bin + (out_valid && out_ready ? 1'b1 : 1'b0);
-assign r_ptr_gray_next = bin2gray(r_ptr_bin_next);
+assign r_ptr_gray_next = r_ptr_bin_next ^ (r_ptr_bin_next >> 1);
 
 //calculate next read pointers if data is read after handshake
 always_ff @(posedge rclk or negedge rst_n) begin

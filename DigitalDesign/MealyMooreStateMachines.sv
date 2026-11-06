@@ -27,29 +27,24 @@ end
 
 always_comb begin
     case(current_state) 
-        S_IDLE: begin
+        S_IDLE:
             if (din) next_state = S_1;
             else next_state = S_IDLE;
-        end
-        S_1: begin
+        S_1:
             if (!din) next_state = S_10;
             else next_state = S_1; //stays in S1 if another 1 seen
-        end
-        S_10: begin
+        S_10: 
             if (!din) next_state = S_100;
             else next_state = S_1;
-        end
-        S_100: begin
+        S_100: 
             if (din) next_state = S_1001;
             else next_state = S_IDLE;
-        end
-        S_1001: begin
+        S_1001:
             if (!din) begin
                 detect = 1'b1;
                 next_state = S_10;
             end else begin
                 next_state = S_10;
-            end
         default: next_state = S_IDLE, detect = 1'b0;
     endcase
 end
@@ -87,30 +82,24 @@ end
 
 always_comb begin
     case(current_state)
-        S_IDLE: begin
+        S_IDLE: 
             if (din) next_state = S_1;
             else next_state = S_IDLE;
-        end
-        S_1: begin
+        S_1: 
             if (!din) next_state = S_10;
             else next_state = S_1; //stays in S1 if another 1 seen
-        end
         S_10: begin
             if (!din) next_state = S_100;
             else next_state = S_1;
-        end
         S_100: begin
             if (din) next_state = S_1001;
             else next_state = S_IDLE;
-        end
         S_1001: begin
             if (!din) next_state = S_10010;
             else next_state = S_1;
-        end
         S_10010: begin
             detect = 1'b1;
             next_state = S_10;
-        end
         default: next_state = S_IDLE, detect = 1'b0;
     endcase
 endmodule

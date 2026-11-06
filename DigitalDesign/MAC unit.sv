@@ -6,7 +6,7 @@ module mac_unit(
     output logic [11:0] acc
 );
 logic [15:0] product;
-logic [11:0] next_acc;
+logic [12:0] next_acc;
 
 assign product = a * b;
 assign next_acc = acc + product [11:0];
@@ -27,6 +27,7 @@ module mac_unit(
     output logic [11:0] acc
 );
 logic [15:0] product;
+logic [12:0] mult_reg;
 
 always_ff @(posedge clk or negedge rst_n) begin
     if(!rst_n) begin

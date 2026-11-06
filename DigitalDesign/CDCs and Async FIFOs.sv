@@ -1,3 +1,86 @@
+//ASYNC FIFO CODE (No Comments, look below)
+module async_fifo #(
+    parameter FIFO_DEPTH = 32,
+    parameter DATA_W = 16
+) (
+    input logic rclk, wclk,
+    input logic rst_n,
+
+    input logic in_valid,
+    output logic in_ready,
+    input logic [DATA_W-1:0] w_data,
+
+    input logic out_valid,
+    output logic out_ready,
+    output logic [DATA_W-1:0] r_data,
+);
+
+localparam ADDR_W = $clog2(FIFO_DEPTH);
+logic [DATA_W-1:0] mem [FIFO_DEPTH-1:0];
+
+logic [ADDR_W:0] w_ptr_bin, w_ptr_bin_next, w_ptr_gray, w_ptr_gray_next;
+logic [ADDR_W:0] r_ptr_bin, r_ptr_bin_next, r_ptr_gray, r_ptr_gray_next;
+logic [ADDR_W:0] r2w_ptr_gray, r2w_ptr_gray_sync1;
+logic [ADDR_W:0] w2r_ptr_gray, w2r_ptr_gray_sync1;
+
+function automatic [ADDR_W:0] bin2gray(input [ADDR_W:0] bin);
+    return bin ^ (bin >> 1);
+endfunction
+
+assign w_ptr_bin_next = wptr_bin + (in_valid && in_ready ? 1'b1 : 1'b0);
+assign w_ptr_gray_next = bin2gray(w_ptr_bin_next);
+
+assign in_ready = ~((w_ptr_gray_next[ADDR_W] != r2w_ptr_gray[ADDR_W])
+                  && (w_ptr_gray_next[ADDR_W-1] != r2w_ptr_gray[ADDR_W-1])
+                  && (w_ptr_gray_next[ADDR_W-2:0] == r2w_ptr_gray[ADDR_W-2:0]));
+
+always_ff @(posedge wclk or negedge rst_n) begin
+    if (!rst_n) begin
+        w_ptr_bin <= 1'0;
+        w_ptr_gray <= 1'b0;
+    end else if (in_valid && in_ready) begin
+        mem[w_ptr_bin[ADDR_W-1:0]] <= w_data;
+        w_ptr_bin <= w_ptr_bin_next;
+        w_ptr_gray <= w_ptr_gray_next;
+    end
+end
+
+always_ff @(posedge wclk or negedge rst_n) begin
+    if (!rst_n) begin
+        r2w_ptr_gray_sync1 <= 1'b0;
+        r2w_ptr_gray <= 1'b0;
+    end else begin
+        r2w_ptr_gray_sync1 <= r_ptr_gray;
+        r2w_ptr_gray <= r2w_ptr_gray_sync1;
+    end
+end
+
+assign r_data = mem[r_ptr_bin[ADDR_W-1:0]];
+assign out_valid = (r_ptr_gray != w2r_ptr_gray);
+assign r_ptr_bin_next = r_ptr_bin + (out_valid && out_ready ? 1'b1 : 1'b0);
+assign r_ptr_gray_next = bin2gray(r_ptr_bin_next);
+
+always_ff @(posedge rclk or negedge rst_n) begin
+    if (!rst_n) begin
+        r_ptr_bin <= 1'b0;
+        r_ptr_gray <= 1'b0;
+    end else if (out_valid && out_ready) begin
+        r_ptr_bin <= r_ptr_bin_next;
+        r_ptr_gray <= r_ptr_gray_next;
+    end
+end
+
+always_ff @(posedge rclk or negedge rst_n) begin
+    if (!rst_n) begin
+        w2r_ptr_gray_sync1 <= 1'b0;
+        w2r_ptr_gray <= 1'b0;
+    end else begin
+        w2r_ptr_gray_sync1 <= w_ptr_gray;
+        w2r_ptr_gray <= w2r_ptr_gray_sync1;
+    end
+end
+endmodule
+
 //SECTION 2: CDCs
 //2.1 Not all modules are run on the same clock domain because across the entire chip, there would be a lot
 //of clock skew if we try to connect everything to the same domain (wire lengths differ), and also the wiring 

@@ -28,7 +28,7 @@ end
 always_comb begin
     next_state = current_state;
     detect = 1'b0;
-    case(current_state) begin
+    case(current_state) 
         S_IDLE: begin
             if (din) next_state = S_1;
             else next_state = S_IDLE;
@@ -52,7 +52,6 @@ always_comb begin
             end else begin
                 next_state = S_10;
             end
-        end
         default: next_state = S_IDLE;
     endcase
 end
@@ -91,7 +90,7 @@ end
 always_comb begin
     next_state = current_state;
     detect = 1'b0;
-    case(current_state) begin
+    case(current_state)
         S_IDLE: begin
             if (din) next_state = S_1;
             else next_state = S_IDLE;
@@ -118,7 +117,6 @@ always_comb begin
         end
         default: next_state = S_IDLE;
     endcase
-end
 endmodule
 
 //1.1c Parameterizable Sequence
